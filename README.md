@@ -1,4 +1,5 @@
 # pnetlab-network-lab
+# !!!!!      WORK-IN-PROGRESS      !!!!!!
 Ambiente di laboratorio virtualizzato realizzato con PNetLab su VMware, progettato per simulare l'infrastruttura di rete di un'azienda distribuita su più sedi.  
 
 OBIETTIVO DEL PROGETTO
@@ -149,7 +150,6 @@ Client verso Mgmt (ping): bloccato Mgmt verso Client (ping): passa, grazie al fi
 Gli screenshot del progetto sono disponibili nella cartella /screenshots e le configurazioni dei dispositivi, esportate con /export, nella cartella /configs.
 COMPETENZE DIMOSTRATE
 
-* progettazione di un piano di indirizzamento coerente con subnet dimensionate in base al ruolo, utilizzando /30 per i link punto-punto e /24 per i segmenti utente
 * configurazione di VLAN con tagging 802.1Q, trunk, porte access, PVID e VLAN filtering su bridge
 * configurazione dell'inter-VLAN routing tramite sub-interfacce SVI
 * troubleshooting strutturato a più livelli, partendo da layer 2 e passando attraverso ARP, routing e configurazione degli host
