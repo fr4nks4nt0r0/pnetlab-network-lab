@@ -57,8 +57,14 @@ Le strade erano due, filtrare sul core switch dove quindi passava il traffico o 
 L'host ha mantenuto ip e gateway, cambiato solo dispositivo che risponde a 192.168.20.1.
 Per far comunicare le due parti ho aggiunto una rotta di default sul Core Switch verso R Edge e su R Edge due rotte statiche verso le reti Client e Mgmt.
 
-Ho poi verificato con un traceroute da Alpine-Client verso la DMZ:
-1 192.168.10.1 (Core Switch) 2 10.0.12.1 (R Edge) 3 192.168.20.10 (Alpine DMZ)
+Ho poi verificato con un traceroute da Alpine-Mgmt verso la DMZ:
+
+1 192.168.99.1, cioè Core Switch
+2 10.0.12.1 R Edge
+3 192.168.20.10 (alpine dmz)
+
+Lo stesso traceroute da Alpine-Client mostra i primi 2 salti uguali, ma il terzo non risponde, dopo l'introduzione del firewall dal client verso la dmz è permessa solo la porta tcp, mentre il traceroute usa pacchetti udp che vengono scartati su r edge.
+Le due prove insieme mostrano sia che il percorso passa dal firewall sia che quest ultimo sta applicando la policy.
 
 Il secondo salto è la prova, adesso ogni pacchetto diretto alla DMZ, che arrivi dalla LAN o da internet, deve attraversare il firewall. La lezione che ho applicato poi a tutto il resto è che le regole vanno messe dove passa il traffico, ed è per questo che nel laboratorio il firewall si trova in due punti e non in uno solo.
 
