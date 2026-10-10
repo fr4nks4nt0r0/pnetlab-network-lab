@@ -1,5 +1,4 @@
 # pnetlab-network-lab
-# !!!!!      WORK-IN-PROGRESS      !!!!!!
 Ambiente di laboratorio virtualizzato realizzato con PNetLab su VMware, progettato per simulare l'infrastruttura di rete di un'azienda distribuita su più sedi.  
 
 OBIETTIVO DEL PROGETTO
@@ -33,7 +32,7 @@ SETUP
 La preparazione del laboratorio ha richiesto diversi passaggi, le immagini sono state caricate in /opt/unetlab/addons/qemu/ tramite SFTP. Il disco RAW di MikroTik è stato convertito in qcow2 usando qemu-img convert, mentre Alpine Linux è stato installato da ISO all'interno di un nodo temporaneo.
 La topologia finale comprende 9 nodi su PNetLab: 2 router, 3 switch e 4 endpoint, e a questi si aggiunge il nodo Net, utilizzato per simulare l'uscita verso internet e come rete di transito tra le due sedi.
 Sul livello 2, l'Access-Switch utilizza un bridge con vlan-filtering.
-La porta ether1 funziona come trunk e trasporta tutte e tre le VLAN tramite tagging, mentre le porte ether2, ether3 ed ether4 funzionano invece come porte access con PVID rispettivamente 10, 20 e 99.
+La porta ether1 funziona come trunk e trasporta le VLAN tramite tagging, mentre le porte ether2, ether3 ed ether4 funzionano invece come porte access con PVID rispettivamente 10, 20 e 99.
 Sul Core-Switch sono state create tre sub-interfacce VLAN sulla porta trunk, e ognuna dispone del proprio indirizzo IP e funziona come gateway della relativa VLAN, permettendo il routing inter-VLAN.
 La filiale utilizza invece una rete layer 2 piatta sul Branch-Switch, mentre il gateway si trova direttamente sull'interfaccia LAN di R-Branch.
 Gli endpoint Alpine utilizzano indirizzi IP statici configurati in /etc/network/interfaces.
@@ -49,9 +48,9 @@ Il traffico tra VLAN diverse passa sempre dal Core-Switch e non viene instradato
 
 REVISIONE ARCHITETTURA
 
-Nella prima versione la DMZ era una VLAN come le altre dietro il Core Switch, mentre il firewall era previsto su R Edge, condividendo però la documentazione ho ricevuto un opinione esterna che ha trovato un problema che non avevo considerato; il routinjg fra le vlan avveniva sul core switch quindi il traffico fra LAN e DMZ non arrivava mai a R edge.
+Nella prima versione la DMZ era una VLAN come le altre dietro il Core Switch, mentre il firewall era previsto su R Edge, condividendo però la documentazione ho ricevuto un'opinione esterna che ha trovato un problema che non avevo considerato; il routing fra le vlan avveniva sul core switch quindi il traffico fra LAN e DMZ non arrivava mai a R edge.
 Qualsiasi regola per isolare la dmz scritta sul firewall non avrebbe funzionato perchè il firewall neanche vedeva quel traffico.
-Inoltre sia la dmz sia la vlan di Managment erano raggiungibili senza filtri dalla VLAN client.
+Inoltre sia la dmz sia la vlan di Management erano raggiungibili senza filtri dalla VLAN client.
 
 Le strade erano due, filtrare sul core switch dove quindi passava il traffico o cambiare architettura, ho optato per la seconda perchè la DMZ andrebbe collegata al firewall e non allo switch interno, ho rimosso quindi la vlan 20 da access switch, e core switch e ho collegato Alpine DMZ direttamente a una terza interfaccia di R Edge.
 L'host ha mantenuto ip e gateway, cambiato solo dispositivo che risponde a 192.168.20.1.
@@ -72,7 +71,13 @@ POLICY DI SICUREZZA E FIREWALL
 
 Prima di fare le regole ho deciso la policy, cioè chi parla con chi:
 
-Client verso Mgmt: bloccato Client verso DMZ: solo il servizio web sulla porta TCP 80 Client verso internet: permesso Mgmt verso Client, DMZ e internet: permesso DMZ verso Client e Mgmt: bloccato DMZ verso internet: permesso Internet verso la rete interna: bloccato
+- Client verso Mgmt: bloccato
+- Client verso DMZ: solo il servizio web sulla porta TCP 80
+- Client verso internet: permesso
+- Mgmt verso Client, DMZ e internet: permesso
+- DMZ verso Client e Mgmt: bloccato
+- DMZ verso internet: permesso
+- Internet verso la rete interna: bloccato
 
 Per quanto riguarda la DMZ può essere raggiunta ma non può mai iniziare connessioni verso la rete interna così che se il server venisse compromesso, l'attaccante resterebbe confinato lì.
 
@@ -96,7 +101,7 @@ Ho risolto disattivando questa funzionalità dalle impostazioni di Windows, riav
 Le etichette visualizzate sui collegamenti di PNetLab non corrispondono necessariamente ai nomi delle interfacce presenti dentro RouterOS.
 Su un nodo le porte comparivano come ether1 ed ether2, mentre su un altro nodo creato dallo stesso template comparivano come ether5, ether6, ether7 ed ether8 con la numerazione dipende dal numero di interfacce assegnate durante la creazione del nodo.
 Questo mi ha fatto perdere parecchio tempo perché inizialmente configuravo gli indirizzi IP sulle porte sbagliate.
-Da quel momento ho iniziaro ad eseguire sempre /interface print appena entro in un nuovo nodo e configurare soltanto le interfacce effettivamente collegate e con il flag R.
+Da quel momento ho iniziato ad eseguire sempre /interface print appena entro in un nuovo nodo e configurare soltanto le interfacce effettivamente collegate e con il flag R.
 
 ----->>>>>ERRORE INDIRIZZO IP
 
@@ -151,9 +156,18 @@ Sul Core Switch, /ip address print conferma la presenza dei gateway SVI e del li
 
 Per la policy di sicurezza ho testato ogni caso:
 
-Client verso Mgmt (ping): bloccato Mgmt verso Client (ping): passa, grazie al firewall stateful Client verso DMZ (ping): bloccato Client verso DMZ sulla porta 80 (nc): passa Mgmt verso DMZ (ping): passa DMZ verso Client (ping): bloccato DMZ verso internet: passa Client verso SSH di Core-Switch e R-Edge: bloccato, nessun banner Mgmt verso SSH di Core-Switch e R-Edge: risponde con SSH-2.0-ROSSSH Client verso il proprio gateway (ping): passa, per la diagnostica
+- Client verso Mgmt (ping): bloccato
+- Mgmt verso Client (ping): passa, grazie al firewall stateful
+- Client verso DMZ (ping): bloccato
+- Client verso DMZ sulla porta 80 (nc): passa
+- Mgmt verso DMZ (ping): passa
+- DMZ verso Client (ping): bloccato
+- DMZ verso internet: passa
+- Client verso SSH di Core-Switch e R-Edge: bloccato, nessun banner
+- Mgmt verso SSH di Core-Switch e R-Edge: risponde con SSH-2.0-ROSSSH
+- Client verso il proprio gateway (ping): passa, per la diagnostica
 
-Gli screenshot del progetto sono disponibili nella cartella /screenshots e le configurazioni dei dispositivi, esportate con /export, nella cartella /configs.
+Gli screenshot del progetto sono disponibili nella cartella /screenshots.
 COMPETENZE DIMOSTRATE
 
 * configurazione di VLAN con tagging 802.1Q, trunk, porte access, PVID e VLAN filtering su bridge
@@ -165,9 +179,3 @@ COMPETENZE DIMOSTRATE
 * valutazione di diverse soluzioni software anche in base ai relativi vincoli di licenza
 * utilizzo di strumenti legalmente ottenibili senza rinunciare alle funzionalità di networking necessarie al laboratorio
 
-SVILUPPI FUTURI
-
-Gli sviluppi previsti per il progetto sono:
-
-* configurazione di OSPF tra Core-Switch e R-Edge, con propagazione della default route verso gli host interni
-* configurazione di un firewall stateful zone-based su R-Edge, con isolamento della DMZ dalla LAN
